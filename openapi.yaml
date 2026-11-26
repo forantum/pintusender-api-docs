@@ -1,0 +1,153 @@
+openapi: 3.0.3
+info:
+  title: PintuSender Public API
+  version: 1.0.0
+  description: |
+    Public API PintuSender untuk integrasi pengiriman pesan WhatsApp.
+    Autentikasi menggunakan Bearer API Key dengan prefix ps_live_.
+servers:
+  - url: https://sender.pintu.web.id/api/v1
+    description: Production
+security:
+  - bearerAuth: []
+paths:
+  /public/messages/send:
+    post:
+      tags: [Messages]
+      summary: Send text message
+      description: Mengirim pesan teks ke nomor WhatsApp atau JID grup yang telah disinkronkan.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to, message]
+              properties:
+                to:
+                  type: string
+                  description: Nomor internasional 8–15 digit tanpa plus, atau JID grup berakhiran @g.us.
+                  example: "6281234567890"
+                message:
+                  type: string
+                  maxLength: 10000
+                  example: "Halo, pesan dikirim melalui PintuSender."
+      responses:
+        "200":
+          description: Pesan berhasil dikirim.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string }
+                  message_id: { type: string }
+                  whatsapp_message_id: { type: string }
+                  to: { type: string, example: "6281234567890" }
+                  status: { type: string, example: sent }
+                  sent_at: { type: string }
+        "400": { description: Request tidak valid atau perangkat tidak terhubung. }
+        "401": { description: API Key tidak ada atau tidak valid. }
+        "403": { description: Akses ditolak, misalnya trial/langganan atau kuota. }
+        "423": { description: Pengiriman dijeda (SENDING_PAUSED). }
+        "502": { description: Kegagalan pengiriman melalui WhatsApp. }
+
+  /public/messages/send-image:
+    post:
+      tags: [Messages]
+      summary: Send image by upload
+      description: Mengirim gambar melalui multipart/form-data. Format JPEG, PNG, GIF; maksimal 5 MB.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [to, image]
+              properties:
+                to:
+                  type: string
+                  example: "6281234567890"
+                image:
+                  type: string
+                  format: binary
+                caption:
+                  type: string
+                  maxLength: 10000
+      responses:
+        "200": { description: Gambar berhasil dikirim. }
+        "400": { description: Request, file, atau parameter tidak valid. }
+        "401": { description: API Key tidak ada atau tidak valid. }
+        "403": { description: Akses ditolak, misalnya trial/langganan atau kuota. }
+        "423": { description: Pengiriman dijeda (SENDING_PAUSED). }
+        "502": { description: Kegagalan pengiriman melalui WhatsApp. }
+
+  /public/messages/send-image-url:
+    post:
+      tags: [Messages]
+      summary: Send image by URL
+      description: Mengambil gambar dari URL HTTPS. File maksimal 5 MB dan format JPEG, PNG, atau GIF.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to, image_url]
+              properties:
+                to:
+                  type: string
+                  example: "6281234567890"
+                image_url:
+                  type: string
+                  format: uri
+                  example: "https://example.com/image.jpg"
+                caption:
+                  type: string
+                  maxLength: 10000
+      responses:
+        "200": { description: Gambar berhasil dikirim. }
+        "400": { description: URL, file, atau parameter tidak valid. }
+        "401": { description: API Key tidak ada atau tidak valid. }
+        "403": { description: Akses ditolak, misalnya trial/langganan atau kuota. }
+        "423": { description: Pengiriman dijeda (SENDING_PAUSED). }
+        "502": { description: Kegagalan pengiriman melalui WhatsApp. }
+
+  /public/messages/send-document:
+    post:
+      tags: [Messages]
+      summary: Send PDF document by upload
+      description: Mengirim dokumen PDF melalui multipart/form-data. PDF valid maksimal 5 MB.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [to, document]
+              properties:
+                to:
+                  type: string
+                  example: "6281234567890"
+                document:
+                  type: string
+                  format: binary
+                  description: File PDF dengan ekstensi .pdf.
+                caption:
+                  type: string
+                  maxLength: 10000
+      responses:
+        "200": { description: Dokumen PDF berhasil dikirim. }
+        "400": { description: Request, file, atau parameter tidak valid. }
+        "401": { description: API Key tidak ada atau tidak valid. }
+        "403": { description: Akses ditolak, misalnya trial/langganan atau kuota. }
+        "423": { description: Pengiriman dijeda (SENDING_PAUSED). }
+        "502": { description: Kegagalan pengiriman melalui WhatsApp. }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API Key
